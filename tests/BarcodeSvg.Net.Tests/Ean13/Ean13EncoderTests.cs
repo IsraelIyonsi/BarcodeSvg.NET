@@ -1,3 +1,4 @@
+using System.Text;
 using BarcodeSvg;
 
 namespace BarcodeSvg.Net.Tests.Ean13;
@@ -63,7 +64,23 @@ public sealed class Ean13EncoderTests
         var pattern = Ean13Encoder.Encode(input);
 
         Assert.Equal(95, pattern.TotalModules);
-        Assert.Equal(95, pattern.Bars.Count);
+    }
+
+    // BarcodePattern documents that Bars is a run-length-encoded, alternating-polarity sequence
+    // (see BarcodePattern's constructor doc), not one entry per module: adjacent same-polarity
+    // modules across digit and guard boundaries are merged into a single wider segment, so
+    // Bars.Count is normally less than the 95-module total width, never equal to it.
+    [Theory]
+    [MemberData(nameof(ExactPatternFixtures))]
+    public void Encode_BarsAlwaysStartOnABarAndStrictlyAlternate(string input, string _)
+    {
+        var pattern = Ean13Encoder.Encode(input);
+
+        Assert.True(pattern.Bars[0].IsBar);
+        for (var i = 1; i < pattern.Bars.Count; i++)
+        {
+            Assert.NotEqual(pattern.Bars[i - 1].IsBar, pattern.Bars[i].IsBar);
+        }
     }
 
     [Theory]
@@ -141,14 +158,16 @@ public sealed class Ean13EncoderTests
         Assert.Throws<ArgumentException>(() => Ean13Encoder.ComputeCheckDigit("123"));
     }
 
+    // Bars is run-length-encoded (see Encode_BarsAlwaysStartOnABarAndStrictlyAlternate), so each
+    // segment is expanded back to one bit per module to reconstruct the flat fixture string.
     private static string BitsToString(BarcodePattern pattern)
     {
-        var bits = new char[pattern.Bars.Count];
-        for (var i = 0; i < pattern.Bars.Count; i++)
+        var bits = new StringBuilder(pattern.TotalModules);
+        foreach (var bar in pattern.Bars)
         {
-            bits[i] = pattern.Bars[i].IsBar ? '1' : '0';
+            bits.Append(bar.IsBar ? '1' : '0', bar.WidthInModules);
         }
 
-        return new string(bits);
+        return bits.ToString();
     }
 }

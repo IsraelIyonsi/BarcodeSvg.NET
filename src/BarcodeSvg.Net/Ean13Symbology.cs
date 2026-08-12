@@ -18,6 +18,12 @@ internal static class Ean13Symbology
     /// <summary>The number of modules each digit's encoding occupies.</summary>
     internal const int DigitWidthInModules = 7;
 
+    /// <summary>
+    /// The total module width of a complete EAN-13 symbol: two 3-module guard patterns, one
+    /// 5-module center guard pattern, and twelve 7-module digit patterns (2 * 3 + 5 + 12 * 7).
+    /// </summary>
+    internal const int TotalModules = (2 * 3) + 5 + (2 * DigitsPerGroup * DigitWidthInModules);
+
     /// <summary>The check digit weight applied to odd 1-based digit positions.</summary>
     internal const int OddPositionWeight = 1;
 

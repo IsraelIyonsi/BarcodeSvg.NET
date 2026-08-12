@@ -110,8 +110,8 @@ public static class Ean13Encoder
 
     private static List<BarSegment> BuildBarSegments(string fullDigits)
     {
-        var bars = new List<BarSegment>();
-        AppendModules(bars, Ean13Symbology.GuardPattern);
+        var modules = new List<bool>(Ean13Symbology.TotalModules);
+        AppendModules(modules, Ean13Symbology.GuardPattern);
 
         var firstDigit = fullDigits[0] - '0';
         var parity = Ean13Symbology.LeftGroupParityByFirstDigit[firstDigit];
@@ -119,27 +119,54 @@ public static class Ean13Encoder
         {
             var digit = fullDigits[1 + i] - '0';
             var pattern = parity[i] ? Ean13Symbology.LeftEvenPatterns[digit] : Ean13Symbology.LeftOddPatterns[digit];
-            AppendModules(bars, pattern);
+            AppendModules(modules, pattern);
         }
 
-        AppendModules(bars, Ean13Symbology.CenterGuardPattern);
+        AppendModules(modules, Ean13Symbology.CenterGuardPattern);
 
         for (var i = 0; i < Ean13Symbology.DigitsPerGroup; i++)
         {
             var digit = fullDigits[1 + Ean13Symbology.DigitsPerGroup + i] - '0';
-            AppendModules(bars, Ean13Symbology.RightPatterns[digit]);
+            AppendModules(modules, Ean13Symbology.RightPatterns[digit]);
         }
 
-        AppendModules(bars, Ean13Symbology.GuardPattern);
+        AppendModules(modules, Ean13Symbology.GuardPattern);
 
-        return bars;
+        return MergeIntoRuns(modules);
     }
 
-    private static void AppendModules(List<BarSegment> bars, bool[] modules)
+    private static void AppendModules(List<bool> modules, bool[] pattern) => modules.AddRange(pattern);
+
+    /// <summary>
+    /// Collapses a flat, one-module-per-entry polarity sequence into the run-length-encoded
+    /// <see cref="BarSegment"/> list <see cref="BarcodePattern"/> documents: alternating polarity,
+    /// starting with a bar, with each segment's width the number of consecutive same-polarity
+    /// modules it replaces. EAN-13's digit and guard patterns are tabulated per-module, so two
+    /// adjacent patterns routinely end and begin with the same polarity (for example, three
+    /// consecutive 1-module spaces spanning a digit boundary); left unmerged, those would violate
+    /// the documented alternating-polarity contract and render as several abutting, separately
+    /// anti-aliased <c>&lt;rect&gt;</c> elements instead of one.
+    /// </summary>
+    private static List<BarSegment> MergeIntoRuns(List<bool> modules)
     {
-        foreach (var isBar in modules)
+        var bars = new List<BarSegment>();
+        var runPolarity = modules[0];
+        var runWidth = SingleModuleWidth;
+
+        for (var i = 1; i < modules.Count; i++)
         {
-            bars.Add(new BarSegment(isBar, SingleModuleWidth));
+            if (modules[i] == runPolarity)
+            {
+                runWidth++;
+                continue;
+            }
+
+            bars.Add(new BarSegment(runPolarity, runWidth));
+            runPolarity = modules[i];
+            runWidth = SingleModuleWidth;
         }
+
+        bars.Add(new BarSegment(runPolarity, runWidth));
+        return bars;
     }
 }

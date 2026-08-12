@@ -34,6 +34,22 @@ public sealed class Code128EncoderTests
         // Two consecutive Code Set A characters (SOH, STX, U+0001-U+0002) amid Code Set B text: LATCH to A, then LATCH back to B.
         { "ab\u0001\u0002cd", "2,1,1,2,1,4,1,2,1,1,2,4,1,2,1,4,2,1,3,1,1,1,4,1,1,2,1,1,2,4,1,2,1,4,2,1,1,1,4,1,3,1,1,4,1,1,2,2,1,4,1,2,2,1,3,2,1,2,2,1,2,3,3,1,1,1,2" },
 
+        // ISO/IEC 15417 Annex E optimal start-set look-ahead: a shared character (space) is
+        // immediately followed by characters that exclusively require Code Set A. Deciding the
+        // start set from data[0] alone (space, shared) would default to B and need a LATCH to A
+        // before the first control character, an 8-symbol-character encoding; looking ahead past
+        // the shared space to the first set-exclusive character starts directly in A and needs no
+        // latch at all, the ISO-optimal 7 symbol characters (Start, space, 3 controls, check, Stop).
+        { " \u0001\u0002\u0003", "2,1,1,4,1,2,2,1,2,2,2,2,1,2,1,1,2,4,1,2,1,4,2,1,1,4,1,1,2,2,1,2,1,1,4,2,2,3,3,1,1,1,2" },
+
+        // ISO/IEC 15417 Annex E optimal look-ahead after leaving Code Set C: once the "1234" digit
+        // pair run ends, the next character ('A') is shared and satisfied by either set, but the
+        // character after it (SOH) exclusively requires A. Deciding 'A's set without looking past
+        // it would default to B, forcing a SHIFT to reach the trailing control character afterwards;
+        // looking ahead finds the control character's A requirement and latches to A immediately,
+        // saving that SHIFT (8 vs. 9 symbol characters for the unoptimized latch-then-shift).
+        { "1234A\u0001", "2,1,1,2,3,2,1,1,2,2,3,2,1,3,1,1,2,3,3,1,1,1,4,1,1,1,1,3,2,3,1,2,1,1,2,4,2,2,3,2,1,1,2,3,3,1,1,1,2" },
+
         // Digit run one below the Code C threshold: stays entirely in Code Set B.
         { "123", "2,1,1,2,1,4,1,2,3,2,2,1,2,2,3,2,1,1,2,2,1,1,3,2,1,3,2,2,1,2,2,3,3,1,1,1,2" },
 

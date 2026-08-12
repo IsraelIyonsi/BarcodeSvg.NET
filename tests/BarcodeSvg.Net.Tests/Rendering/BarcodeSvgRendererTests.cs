@@ -49,6 +49,25 @@ public sealed class BarcodeSvgRendererTests
         Assert.DoesNotContain("<img", svg, StringComparison.Ordinal);
     }
 
+    // XML 1.0 has no legal representation, escaped or otherwise, for most ASCII control
+    // characters (0x00-0x08, 0x0B, 0x0C, 0x0E-0x1F). Code 128 explicitly supports encoding them
+    // (Code Set A), ShowText defaults to true, and the default text is the raw data, so this data
+    // must flow all the way to a well-formed <text> element without XmlException, and without
+    // silently reproducing the illegal byte verbatim in the output string.
+    [Fact]
+    public void Render_ControlCharacterData_DefaultTextPath_ProducesWellFormedXml()
+    {
+        var pattern = Code128Encoder.Encode("\u0001ABC");
+
+        var svg = BarcodeSvgRenderer.Render(pattern);
+        var document = XDocument.Parse(svg);
+
+        var textElement = document.Root!.Elements().Single(e => e.Name.LocalName == "text");
+        Assert.DoesNotContain('\u0001', textElement.Value);
+        Assert.Contains('\uFFFD', textElement.Value);
+        Assert.DoesNotContain("\u0001", svg, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Render_MaliciousColorValues_AreEscapedAndDoNotBreakXml()
     {

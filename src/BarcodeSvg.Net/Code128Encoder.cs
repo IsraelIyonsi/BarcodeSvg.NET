@@ -68,9 +68,7 @@ public static class Code128Encoder
                     continue;
                 }
 
-                var target = RequirementFor(data[index]) == Code128CharacterRequirement.RequiresA
-                    ? Code128CodeSet.A
-                    : Code128CodeSet.B;
+                var target = PreferredAOrB(data, index);
                 values.Add(LatchValueFor(target));
                 current = target;
                 continue;
@@ -123,9 +121,36 @@ public static class Code128Encoder
             return Code128CodeSet.C;
         }
 
-        return RequirementFor(data[0]) == Code128CharacterRequirement.RequiresA
-            ? Code128CodeSet.A
-            : Code128CodeSet.B;
+        return PreferredAOrB(data, 0);
+    }
+
+    /// <summary>
+    /// Chooses Code Set A or B for the character at <paramref name="index"/>, per the ISO/IEC
+    /// 15417 Annex E look-ahead heuristic: a character exclusive to A or B decides the set
+    /// immediately, since only that set can encode it. A character shared by both sets carries no
+    /// preference of its own, so the choice is deferred to the next set-exclusive character found
+    /// scanning forward; if the rest of the data never requires a set exclusively, B is chosen (an
+    /// arbitrary but harmless default, since every remaining character fits either set). Choosing
+    /// by look-ahead rather than by <paramref name="index"/> alone avoids a latch that the very
+    /// next set-exclusive character would immediately have to undo.
+    /// </summary>
+    private static Code128CodeSet PreferredAOrB(string data, int index)
+    {
+        for (var i = index; i < data.Length; i++)
+        {
+            var requirement = RequirementFor(data[i]);
+            if (requirement == Code128CharacterRequirement.RequiresA)
+            {
+                return Code128CodeSet.A;
+            }
+
+            if (requirement == Code128CharacterRequirement.RequiresB)
+            {
+                return Code128CodeSet.B;
+            }
+        }
+
+        return Code128CodeSet.B;
     }
 
     private static Code128CharacterRequirement RequirementFor(char c)
