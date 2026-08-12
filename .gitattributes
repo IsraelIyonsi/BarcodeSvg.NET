@@ -1,0 +1,2 @@
+* text=auto
+tests/BarcodeSvg.Net.Tests/fixtures/** -text
