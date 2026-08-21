@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-21
+
+### Added
+
+- `UpcAEncoder.Encode(string)` and `UpcAEncoder.ComputeCheckDigit(ReadOnlySpan<char>)`: UPC-A (ISO/IEC 15420) encoding from 11 digits (check digit computed) or 12 digits (check digit validated). UPC-A is the EAN-13 symbol with an implicit leading number-system digit of `0`, so the encoder reuses the EAN-13 digit tables, guard bars, parity table and weighted modulo-10 checksum, and reports the human-readable line as the 12-digit UPC-A value.
+- `UpcABarcode`: one-call convenience wrapper that encodes and renders a UPC-A symbol to SVG in a single method.
+- Verified that a UPC-A symbol's bars are byte-for-byte the EAN-13 bars of `0` + the 12 digits (proving the reuse), against the classic "036000291452" worked example whose check digit is 2.
+
 ## [0.1.0] - 2026-08-12
 
 ### Added

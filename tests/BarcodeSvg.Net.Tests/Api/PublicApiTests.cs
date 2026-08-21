@@ -45,6 +45,48 @@ public sealed class PublicApiTests
     }
 
     [Fact]
+    public void UpcABarcode_Encode_MatchesUpcAEncoder()
+    {
+        var viaFacade = UpcABarcode.Encode("036000291452");
+        var viaEncoder = UpcAEncoder.Encode("036000291452");
+
+        Assert.Equal(viaEncoder.Bars, viaFacade.Bars);
+    }
+
+    [Fact]
+    public void UpcABarcode_ToSvg_MatchesManualEncodeThenRender()
+    {
+        var options = new BarcodeRenderOptions { ModuleWidth = 3 };
+
+        var viaFacade = UpcABarcode.ToSvg("036000291452", options);
+        var viaManualCall = BarcodeSvgRenderer.Render(UpcAEncoder.Encode("036000291452"), options);
+
+        Assert.Equal(viaManualCall, viaFacade);
+    }
+
+    // With the human-readable line hidden, a UPC-A SVG is byte-identical to the EAN-13 SVG of
+    // "0" + the 12 digits, proving UPC-A reuses the EAN-13 encoding and the shared SVG renderer.
+    [Fact]
+    public void UpcABarcode_ToSvg_WithTextHidden_EqualsEan13SvgOfZeroPrefixedValue()
+    {
+        var options = new BarcodeRenderOptions { ShowText = false };
+
+        var upcASvg = UpcABarcode.ToSvg("036000291452", options);
+        var ean13Svg = Ean13Barcode.ToSvg("0036000291452", options);
+
+        Assert.Equal(ean13Svg, upcASvg);
+    }
+
+    [Fact]
+    public void UpcABarcode_ToSvg_RenderOptionsFlowThrough()
+    {
+        var narrow = UpcABarcode.ToSvg("036000291452", new BarcodeRenderOptions { ModuleWidth = 2 });
+        var wide = UpcABarcode.ToSvg("036000291452", new BarcodeRenderOptions { ModuleWidth = 4 });
+
+        Assert.NotEqual(narrow, wide);
+    }
+
+    [Fact]
     public void BarcodePattern_TotalModules_IsSumOfSegmentWidths()
     {
         var pattern = Code128Encoder.Encode("1234567890");

@@ -12,15 +12,15 @@
 
   <PropertyGroup>
     <PackageId>BarcodeSvg.Net</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Title>BarcodeSvg.NET</Title>
     <Authors>Israel Iyonsi</Authors>
     <Copyright>Copyright (c) 2026 Israel Iyonsi</Copyright>
-    <Description>Code 128 (auto code-set A/B/C) and EAN-13 barcodes rendered as self-contained SVG. Correct check digits, quiet zones and parity patterns, deterministic output, no System.Drawing or native dependency, AOT-friendly.</Description>
+    <Description>Code 128 (auto code-set A/B/C), EAN-13 and UPC-A barcodes rendered as self-contained SVG. Correct check digits, quiet zones and parity patterns, deterministic output, no System.Drawing or native dependency, AOT-friendly.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/IsraelIyonsi/BarcodeSvg.NET</RepositoryUrl>
     <PackageProjectUrl>https://github.com/IsraelIyonsi/BarcodeSvg.NET</PackageProjectUrl>
-    <PackageTags>barcode;svg;code128;ean13;code-128;ean-13;invoicing;label</PackageTags>
+    <PackageTags>barcode;svg;code128;ean13;upca;code-128;ean-13;upc-a;invoicing;label</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>See https://github.com/IsraelIyonsi/BarcodeSvg.NET/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
